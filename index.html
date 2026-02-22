@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MODULIMO — Tableau de bord</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+    html,body{ margin:0; padding:0; background:#050805; }
+    #modulimo, #modulimo *{ box-sizing:border-box; }
+
+    #modulimo{
+      width:100%;
+      max-width:1100px;
+      margin:0 auto;
+      padding:12px;
+      border-radius:14px;
+      background:#080c08;
+      background-image: radial-gradient(ellipse at center, #0a1a0a 0%, #080c08 70%);
+      color:#d0f0d0;
+      font-family:'Orbitron', monospace;
+      position: relative;
+      overflow: visible;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+
+      /* ✅ réserve pour la barre fixed arrière (PC seulement) */
+      padding-bottom: 210px;
+    }
+
+    /* ===== Top bar ===== */
+    #modulimo .top-actions{
+      position: sticky;
+      top: 8px;
+      z-index: 30;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:100%;
+      margin-bottom: 10px;
+    }
+    #modulimo .action-btn,
+    #modulimo .lang-btn{
+      background:transparent;
+      border:1px solid rgba(120,255,220,0.35);
+      color:#6fe;
+      font-family:'Orbitron', monospace;
+      font-size:0.65rem;
+      letter-spacing:0.15em;
+      padding:0.45rem 0.85rem;
+      border-radius:6px;
+      cursor:pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    #modulimo .action-btn:hover,
+    #modulimo .lang-btn:hover{ background:rgba(120,255,220,0.10); box-shadow:0 0 12px rgba(120,255,220,0.18); }
+    #modulimo .lang-btn{ margin-left:auto; }
+
+    #modulimo .ico{ width:16px; height:16px; display:inline-block; opacity:0.95; }
+    #modulimo .ico svg{ width:16px; height:16px; display:block; }
+
+    #modulimo .note{
+      display:none;
+      margin: 8px 0 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 220, 120, 0.35);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.18);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.70rem;
+      letter-spacing: 0.08em;
+      color: #ffe2aa;
+      text-align: center;
+    }
+    #modulimo .note.show{ display:block; }
+
+    /* ===== Header ===== */
+    #modulimo .header{
+      width:100%;
+      text-align:center;
+      padding: 6px 8px 2px;
+    }
+    #modulimo .titre-3d{
+      font-size: clamp(1.25rem, 2.3vw, 2.05rem);
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing: 0.22em;
+      line-height:1.12;
+      margin: 8px 0 8px;
+      color:#6fe;
+      text-shadow:
+        0px 1px 0px #4ca,
+        0px 2px 0px #3b9,
+        0px 6px 12px rgba(0,0,0,0.8),
+        0px 10px 25px rgba(50,220,150,0.25);
+      transform: perspective(420px) rotateX(14deg);
+      transform-origin:center 60%;
+      display:inline-block;
+    }
+    #modulimo .subtitle{
+      font-family:'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.34em;
+      color:#4a8;
+      opacity:0.9;
+      margin-bottom: 6px;
+    }
+    #modulimo .clock{
+      font-family:'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.24em;
+      color:#6fe;
+      opacity:0.88;
+      margin: 0 0 10px;
+      text-shadow: 0 0 10px rgba(80,255,200,0.18);
+      white-space: nowrap;
+    }
+
+    /* ===== FEU AVANT (en haut, simple) ===== */
+    #modulimo .front-wrap{
+      position: relative;
+      margin: 10px 0 14px;
+      border: 1px solid rgba(120,255,220,0.18);
+      background: rgba(0,0,0,0.14);
+      border-radius: 12px;
+      padding: 12px;
+      overflow: visible;
+      text-align:center;
+    }
+    #modulimo .front-glow{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      top: -18px;
+      width: min(720px, 96%);
+      height: 170px;
+      pointer-events:none;
+      opacity: 0;
+      transition: opacity 220ms ease;
+      background: radial-gradient(ellipse at 50% 20%,
+        rgba(255,255,255,0.42) 0%,
+        rgba(255,255,255,0.20) 35%,
+        rgba(255,255,255,0.08) 58%,
+        rgba(255,255,255,0.00) 80%);
+      mix-blend-mode: screen;
+    }
+    #modulimo .front-glow.on{ opacity:1; }
+
+    #modulimo .front-btn{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      background: transparent;
+      border-radius: 12px;
+      padding: 0.70rem 1.05rem;
+      font-family:'Orbitron', monospace;
+      font-size: 0.70rem;
+      letter-spacing: 0.18em;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      white-space:nowrap;
+      border: 1px solid rgba(255,255,255,0.70);
+      color:#fff;
+      position:relative;
+      z-index:2;
+    }
+    #modulimo .front-btn.on{
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 12px rgba(255,255,255,0.35), inset 0 0 18px rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,1);
+    }
+
+    /* ===== COMPTEURS + CLIGNOTANTS ===== */
+    #modulimo .gauges-row{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items:flex-start;
+    }
+
+    #modulimo .gauge-with-side{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      width:100%;
+      max-width: 1060px;
+      flex-wrap: wrap;
+    }
+
+    #modulimo .gpanel{
+      flex: 1 1 420px;
+      min-width: min(420px, 92vw);
+      border: 1px solid rgba(120,255,220,0.18);
+      background: rgba(0,0,0,0.18);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    #modulimo .glabel{
+      font-family:'Share Tech Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      text-align:center;
+      margin: 2px 0 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    #modulimo .glabel.speed{ color:#6fe; }
+    #modulimo .glabel.power{ color:#66ccff; }
+
+    #modulimo canvas{ display:block; width:100%; height:auto; }
+
+    #modulimo .value{
+      text-align:center;
+      margin-top: 8px;
+      padding-bottom: 2px;
+    }
+    #modulimo .num{
+      font-size: clamp(1.55rem, 2.6vw, 2.45rem);
+      font-weight: 900;
+      line-height: 1;
+      color:#fff;
+    }
+    #modulimo .unit{
+      font-family:'Share Tech Mono', monospace;
+      font-size: 0.70rem;
+      letter-spacing: 0.28em;
+      margin-top: 2px;
+    }
+    #modulimo .unit.speed{ color:#6fe; }
+    #modulimo .unit.power{ color:#66ccff; }
+
+    /* ===== clignotants ===== */
+    #modulimo .side{
+      width: 86px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap:8px;
+      user-select:none;
+    }
+    #modulimo .icon-box{
+      width: 68px;
+      height: 68px;
+      border-radius: 14px;
+      border: 2px solid #2a3a2a;
+      background: rgba(0,0,0,0.15);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #modulimo .icon-box:hover{ border-color: rgba(255,204,0,0.40); }
+    #modulimo .icon-box.active{
+      border-color: #ffcc00;
+      box-shadow: 0 0 14px rgba(255,204,0,0.35);
+    }
+    #modulimo .blinker-arrow{
+      font-size: 2.4rem;
+      line-height: 1;
+      color: #2a3a2a;
+      filter: drop-shadow(0 0 0 transparent);
+      transition: color .08s, filter .08s;
+    }
+    #modulimo .icon-box.active .blinker-arrow{
+      color:#ffcc00;
+      filter: drop-shadow(0 0 8px rgba(255,204,0,0.9)) drop-shadow(0 0 18px rgba(255,136,0,0.45));
+    }
+    #modulimo .icon-label{
+      font-size: 0.50rem;
+      letter-spacing: 0.18em;
+      color:#3a5a3a;
+      font-family:'Share Tech Mono', monospace;
+      text-align:center;
+      white-space:nowrap;
+    }
+
+    /* ===== CONTROLES ===== */
+    #modulimo .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top: 12px;
+    }
+    #modulimo .cpanel{
+      border: 1px solid rgba(120,255,220,0.18);
+      background: rgba(0,0,0,0.18);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    #modulimo .ctitle{
+      font-family:'Share Tech Mono', monospace;
+      font-size: 0.60rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      text-align:center;
+      margin: 2px 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(120,255,220,0.18);
+    }
+    #modulimo .ctitle.speed{ color:#6fe; border-bottom-color: rgba(120,255,220,0.22); }
+    #modulimo .ctitle.power{ color:#66ccff; border-bottom-color: rgba(0,170,255,0.22); }
+
+    #modulimo .input-group{ display:flex; align-items:center; gap:10px; margin-top:10px; }
+    #modulimo .ilabel{
+      font-family:'Share Tech Mono', monospace;
+      font-size:0.60rem;
+      letter-spacing:0.16em;
+      white-space:nowrap;
+      opacity:0.95;
+    }
+    #modulimo .ilabel.s{ color:#6fe; }
+    #modulimo .ilabel.p{ color:#66ccff; }
+
+    #modulimo input[type="number"]{
+      flex:1;
+      background:#0a180a;
+      border-radius:6px;
+      color:#fff;
+      font-family:'Share Tech Mono', monospace;
+      font-size: 1.02rem;
+      padding:0.36rem 0.56rem;
+      text-align:center;
+      outline:none;
+      border:1px solid rgba(120,255,220,0.18);
+    }
+
+    #modulimo input[type="range"]{
+      flex:1;
+      -webkit-appearance:none;
+      appearance:none;
+      height:6px;
+      border-radius:4px;
+      outline:none;
+      cursor:pointer;
+    }
+    #modulimo input.speed-range{
+      background: linear-gradient(to right, #4e8 var(--pct,0%), #1a2a1a var(--pct,0%));
+    }
+    #modulimo input.power-range{
+      background: linear-gradient(to right,
+        #33ee88 0%,
+        #1a2a1a 49%,
+        #1a2a1a 51%,
+        #00aaff 100%);
+    }
+    #modulimo input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      width:18px; height:18px;
+      border-radius:50%;
+      background:#00aaff;
+      box-shadow:0 0 10px rgba(0,170,255,0.35);
+    }
+
+    #modulimo .btnrow{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+    #modulimo .btn{
+      background:transparent;
+      border:1px solid rgba(0,170,255,0.35);
+      color:#66ccff;
+      font-family:'Orbitron', monospace;
+      font-size:0.60rem;
+      letter-spacing:0.12em;
+      padding: 0.40rem 0.70rem;
+      border-radius:8px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background .2s, box-shadow .2s;
+    }
+    #modulimo .btn:hover{ background:rgba(0,170,255,0.10); box-shadow:0 0 10px rgba(0,170,255,0.18); }
+    #modulimo .btn.s{ border-color: rgba(120,255,220,0.35); color:#6fe; }
+    #modulimo .btn.s:hover{ background:rgba(120,255,220,0.10); box-shadow:0 0 10px rgba(120,255,220,0.16); }
+
+    /* ===== FEU ARRIÈRE en bas de l'écran (PC) ===== */
+    #modulimo .rear-fixed{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: max(env(safe-area-inset-bottom), 10px);
+      width: min(720px, 94vw);
+      z-index: 9999;
+      display:flex;
+      justify-content:center;
+      pointer-events: none;
+    }
+    #modulimo .rear-glow{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      bottom: -10px;
+      width: min(720px, 94vw);
+      height: 170px;
+      pointer-events:none;
+      opacity: 0;
+      transition: opacity 220ms ease;
+      background: radial-gradient(ellipse at 50% 80%,
+        rgba(255, 30, 30, 0.40) 0%,
+        rgba(255, 30, 30, 0.24) 28%,
+        rgba(255, 30, 30, 0.11) 56%,
+        rgba(255, 30, 30, 0.00) 80%);
+      mix-blend-mode: screen;
+    }
+    #modulimo .rear-glow.on{ opacity: 1; }
+
+    #modulimo .backlight-btn{
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
+      background: transparent;
+      border: 1px solid rgba(255,80,80,0.7);
+      color: #ffd0d0;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.70rem;
+      letter-spacing: 0.18em;
+      padding: 0.62rem 1.15rem;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select:none;
+      backdrop-filter: blur(1px);
+      -webkit-tap-highlight-color: transparent;
+      width: min(720px, 94vw);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      white-space:nowrap;
+    }
+    #modulimo .backlight-btn.on{
+      border-color: rgba(255,60,60,1);
+      background: rgba(255, 20, 20, 0.12);
+      box-shadow:
+        0 0 10px rgba(255,40,40,0.45),
+        0 0 26px rgba(255,40,40,0.28),
+        inset 0 0 18px rgba(255,40,40,0.18);
+    }
+
+    /* ✅ Mobile: on désactive le fixed pour éviter le bas tronqué dans GoDaddy */
+    @media (max-width: 860px){
+      #modulimo{ padding-bottom: 14px; }
+      #modulimo .controls{ grid-template-columns: 1fr; }
+      #modulimo .rear-fixed{ position: static; transform:none; left:auto; bottom:auto; width:100%; margin-top: 14px; pointer-events:auto; }
+      #modulimo .rear-glow{ display:none; }
+      #modulimo .backlight-btn{ width:100%; }
+    }
+  </style>
+</head>
+
+<body>
+<div id="modulimo">
+  <div class="top-actions">
+    <button class="action-btn" id="fsBtn" type="button" title="Plein écran">
+      <span class="ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" stroke="rgba(120,255,220,0.95)" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span id="fsText">PLEIN ÉCRAN</span>
+    </button>
+    <button class="lang-btn" id="langBtn" type="button">🌐 EN</button>
+  </div>
+
+  <div class="note" id="noteBox"></div>
+
+  <div class="header">
+    <div class="titre-3d">MODULIMO</div>
+    <div class="subtitle" id="subtitle">TABLEAU DE BORD</div>
+    <div class="clock" id="clock">--:--:-- — ----/--/--</div>
+  </div>
+
+  <!-- FEU AVANT -->
+  <div class="front-wrap">
+    <div class="front-glow" id="frontGlow" aria-hidden="true"></div>
+    <button class="front-btn" id="frontBtn" type="button" title="Feu avant">
+      <span class="ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M3 8h7a6 6 0 0 1 6 6v2H3V8Z" stroke="rgba(255,255,255,0.95)" stroke-width="1.6"/>
+          <path d="M16 10.5l5-2v9l-5-2" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 11.5h6M6 14h6" stroke="rgba(255,255,255,0.65)" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span id="frontText">FEU AVANT</span>
+    </button>
+  </div>
+
+  <!-- COMPTEURS + CLIGNOTANTS -->
+  <div class="gauges-row">
+    <div class="gauge-with-side">
+
+      <div class="side">
+        <div class="icon-box" id="btnLeft" title="Clignotant gauche">
+          <div class="blinker-arrow">◀</div>
+        </div>
+        <div class="icon-label" id="lblSideLeft">GAUCHE</div>
+      </div>
+
+      <div class="gpanel">
+        <div class="glabel power" id="lblPower">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M3 8.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7Z" stroke="rgba(160,220,255,0.95)" stroke-width="1.6"/>
+              <path d="M22 10v4" stroke="rgba(160,220,255,0.95)" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M8 10h3M8 13.5h6" stroke="rgba(160,220,255,0.55)" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span>Puissance</span>
+        </div>
+        <canvas id="gaugePower"></canvas>
+        <div class="value">
+          <div class="num" id="powerDisplay">0</div>
+          <div class="unit power" id="unitPower">Watts</div>
+        </div>
+      </div>
+
+      <div class="gpanel">
+        <div class="glabel speed" id="lblSpeed">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M13 2 4 14h7l-1 8 10-14h-7l0-6Z" stroke="rgba(120,255,220,0.95)" stroke-width="1.6" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Vitesse</span>
+        </div>
+        <canvas id="gaugeSpeed"></canvas>
+        <div class="value">
+          <div class="num" id="speedDisplay">0</div>
+          <div class="unit speed" id="unitSpeed">km / h</div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="icon-box" id="btnRight" title="Clignotant droit">
+          <div class="blinker-arrow">▶</div>
+        </div>
+        <div class="icon-label" id="lblSideRight">DROITE</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONTROLES -->
+  <div class="controls">
+    <div class="cpanel">
+      <div class="ctitle power" id="ctrlPower">PUISSANCE CONDENSATEUR</div>
+
+      <div class="input-group">
+        <span class="ilabel p">-300</span>
+        <input type="range" class="power-range" id="sliderPower" min="-300" max="300" value="0" step="1" />
+        <span class="ilabel p">+300</span>
+      </div>
+
+      <div class="input-group">
+        <input type="number" id="numPower" min="-300" max="300" value="0" step="1" />
+        <span class="ilabel p">W</span>
+      </div>
+
+      <div class="btnrow">
+        <button class="btn" type="button" data-power="-300">-300</button>
+        <button class="btn" type="button" data-power="-150">-150</button>
+        <button class="btn" type="button" data-power="0">0</button>
+        <button class="btn" type="button" data-power="150">+150</button>
+        <button class="btn" type="button" data-power="300">+300</button>
+      </div>
+    </div>
+
+    <div class="cpanel">
+      <div class="ctitle speed" id="ctrlSpeed">VITESSE</div>
+
+      <div class="input-group">
+        <span class="ilabel s">0</span>
+        <input type="range" class="speed-range" id="sliderSpeed" min="0" max="90" value="0" step="1" />
+        <span class="ilabel s">90</span>
+      </div>
+
+      <div class="input-group">
+        <input type="number" id="numSpeed" min="0" max="90" value="0" step="1" />
+        <span class="ilabel s">km/h</span>
+      </div>
+
+      <div class="btnrow">
+        <button class="btn s" type="button" data-speed="0">STOP</button>
+        <button class="btn s" type="button" data-speed="20">20</button>
+        <button class="btn s" type="button" data-speed="40">40</button>
+        <button class="btn s" type="button" data-speed="60">60</button>
+        <button class="btn s" type="button" data-speed="90">MAX</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEU ARRIÈRE (fixed en bas sur PC) -->
+  <div class="rear-fixed" id="rearFixed">
+    <div class="rear-glow" id="rearGlow" aria-hidden="true"></div>
+    <button class="backlight-btn" id="backlightBtn" type="button">
+      <span class="ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M21 8h-7a6 6 0 0 0-6 6v2h13V8Z" stroke="rgba(255,180,180,0.95)" stroke-width="1.6"/>
+          <path d="M8 10.5l-5-2v9l5-2" stroke="rgba(255,180,180,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18 11.5h-6M18 14h-6" stroke="rgba(255,120,120,0.65)" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span id="rearText">FEU ARRIÈRE</span>
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+  const noteBox = $('noteBox');
+  function showNote(html){
+    if(!noteBox) return;
+    noteBox.innerHTML = html;
+    noteBox.classList.add('show');
+    clearTimeout(window.__noteT);
+    window.__noteT = setTimeout(()=>noteBox.classList.remove('show'), 6500);
+  }
+
+  // ===== Clock =====
+  let lang='fr';
+  const pad2=n=>String(n).padStart(2,'0');
+  function formatClock(d){
+    const hh=pad2(d.getHours()), mm=pad2(d.getMinutes()), ss=pad2(d.getSeconds());
+    const dateStr = d.toLocaleDateString(lang==='fr' ? 'fr-CA' : 'en-CA',
+      { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+    return `${hh}:${mm}:${ss} — ${dateStr}`;
+  }
+  function updateClock(){
+    const el=$('clock'); if(el) el.textContent = formatClock(new Date());
+  }
+  updateClock(); setInterval(updateClock,1000);
+
+  // ===== Fullscreen (PC) =====
+  function isFullscreen(){
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  async function requestFs(){
+    const wrapper = $('modulimo');
+    try{
+      if(wrapper.requestFullscreen) await wrapper.requestFullscreen({ navigationUI: "hide" });
+      else if(wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
+    }catch(e){
+      showNote("Plein écran bloqué (souvent dans l’aperçu GoDaddy / iframe). Ouvre la page publiée dans un nouvel onglet.");
+      try{ window.open(window.location.href, "_blank"); }catch(_){}
+    }
+  }
+  async function exitFs(){
+    try{
+      if(document.exitFullscreen) await document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }catch(e){}
+  }
+  $('fsBtn')?.addEventListener('click', ()=>{ isFullscreen() ? exitFs() : requestFs(); });
+
+  // ===== Feu arrière (bottom) =====
+  let rearOn=false;
+  $('backlightBtn')?.addEventListener('click', function(){
+    rearOn=!rearOn;
+    this.classList.toggle('on', rearOn);
+    $('rearGlow')?.classList.toggle('on', rearOn);
+  });
+
+  // ===== Feu avant (top) =====
+  let frontOn=false;
+  $('frontBtn')?.addEventListener('click', function(){
+    frontOn=!frontOn;
+    this.classList.toggle('on', frontOn);
+    $('frontGlow')?.classList.toggle('on', frontOn);
+  });
+
+  // ===== Clignotants =====
+  const blinkerTimers={left:null,right:null};
+  const blinkerState={left:false,right:false};
+  const blinkerOn={left:false,right:false};
+
+  function setBlinkerActive(side, on){
+    const id = side==='left' ? 'btnLeft' : 'btnRight';
+    $(id)?.classList.toggle('active', on);
+  }
+  function flash(side){
+    blinkerOn[side]=!blinkerOn[side];
+    setBlinkerActive(side, blinkerOn[side]);
+    blinkerTimers[side]=setTimeout(()=>flash(side), blinkerOn[side]?500:300);
+  }
+  function startBlinker(side){
+    blinkerState[side]=true;
+    const other = side==='left' ? 'right' : 'left';
+    if(blinkerState[other]) stopBlinker(other);
+    flash(side);
+  }
+  function stopBlinker(side){
+    blinkerState[side]=false;
+    clearTimeout(blinkerTimers[side]);
+    blinkerOn[side]=false;
+    setBlinkerActive(side,false);
+  }
+  function toggleBlinker(side){
+    blinkerState[side] ? stopBlinker(side) : startBlinker(side);
+  }
+  $('btnLeft')?.addEventListener('click', ()=>toggleBlinker('left'));
+  $('btnRight')?.addEventListener('click', ()=>toggleBlinker('right'));
+
+  // ===== Translations =====
+  const t={
+    fr:{
+      subtitle:'TABLEAU DE BORD', unitPower:'Watts', unitSpeed:'km / h',
+      ctrlPower:'PUISSANCE CONDENSATEUR', ctrlSpeed:'VITESSE',
+      btnLang:'🌐 EN', fs:'PLEIN ÉCRAN',
+      rear:'FEU ARRIÈRE', front:'FEU AVANT',
+      L:'GAUCHE', R:'DROITE'
+    },
+    en:{
+      subtitle:'DASHBOARD', unitPower:'Watts', unitSpeed:'km / h',
+      ctrlPower:'CAPACITOR POWER', ctrlSpeed:'SPEED',
+      btnLang:'🌐 FR', fs:'FULL SCREEN',
+      rear:'BACKLIGHT', front:'HEADLIGHT',
+      L:'LEFT', R:'RIGHT'
+    }
+  };
+  $('langBtn')?.addEventListener('click', ()=>{
+    lang = (lang==='fr') ? 'en' : 'fr';
+    const x=t[lang];
+    $('subtitle').textContent=x.subtitle;
+    $('unitPower').textContent=x.unitPower;
+    $('unitSpeed').textContent=x.unitSpeed;
+    $('ctrlPower').textContent=x.ctrlPower;
+    $('ctrlSpeed').textContent=x.ctrlSpeed;
+    $('langBtn').textContent=x.btnLang;
+    $('fsText').textContent=x.fs;
+    $('rearText').textContent=x.rear;
+    $('frontText').textContent=x.front;
+    $('lblSideLeft').textContent=x.L;
+    $('lblSideRight').textContent=x.R;
+    updateClock();
+  });
+
+  // ===== Gauges (Canvas) =====
+  const startAngle = Math.PI * 1.25;
+  const sweep      = Math.PI * 1.5;
+  const maxSpeed = 90;
+  const minPower = -300;
+  const maxPower = 300;
+
+  function speedToAngle(val){
+    const tt = clamp(val,0,maxSpeed)/maxSpeed;
+    return startAngle + tt*sweep;
+  }
+  function powerToAngle(val){
+    const tt = (clamp(val,minPower,maxPower) - minPower) / (maxPower - minPower);
+    return startAngle + tt*sweep;
+  }
+  const midPowerAngle = powerToAngle(0);
+
+  const csSpeed=$('gaugeSpeed');
+  const csPower=$('gaugePower');
+  const ctxS=csSpeed.getContext('2d');
+  const ctxP=csPower.getContext('2d');
+
+  const speedZones=[
+    { from:0, to:30, color:'#33ee88' },
+    { from:30,to:60, color:'#ffcc00' },
+    { from:60,to:90, color:'#ff3355' }
+  ];
+
+  function getSpeedColor(v){ return v<30 ? '#33ee88' : (v<60 ? '#ffcc00' : '#ff3355'); }
+  function getPowerColor(v){ return v<0 ? '#33ee88' : (v>0 ? '#00aaff' : '#66ccff'); }
+
+  function drawSpeed(speed){
+    const dpr = window.devicePixelRatio || 1;
+    const W = csSpeed.width / dpr;
+    const H = csSpeed.height / dpr;
+    const cx = W/2, cy = H*0.60, r = Math.min(W,H)*0.48;
+    ctxS.clearRect(0,0,W,H);
+
+    const bg = ctxS.createRadialGradient(cx,cy,r-15,cx,cy,r+6);
+    bg.addColorStop(0,'#142014'); bg.addColorStop(1,'#080c08');
+    ctxS.beginPath(); ctxS.arc(cx,cy,r+3,0,Math.PI*2); ctxS.fillStyle=bg; ctxS.fill();
+    ctxS.beginPath(); ctxS.arc(cx,cy,r+1,0,Math.PI*2); ctxS.strokeStyle='#2a4a2a'; ctxS.lineWidth=1.5; ctxS.stroke();
+
+    ctxS.beginPath(); ctxS.arc(cx,cy,r-14,startAngle,startAngle+sweep,false);
+    ctxS.strokeStyle='#142014'; ctxS.lineWidth=22; ctxS.stroke();
+
+    speedZones.forEach(z=>{
+      ctxS.beginPath();
+      ctxS.arc(cx,cy,r-14,speedToAngle(z.from),speedToAngle(z.to),false);
+      ctxS.strokeStyle=z.color+'35'; ctxS.lineWidth=22; ctxS.stroke();
+    });
+
+    if(speed>0){
+      const ac=getSpeedColor(speed);
+      const grd=ctxS.createLinearGradient(0,cy,W,cy);
+      grd.addColorStop(0,'#33ee88'); grd.addColorStop(0.5,'#ffcc00'); grd.addColorStop(1,ac);
+      ctxS.beginPath();
+      ctxS.arc(cx,cy,r-14,startAngle,speedToAngle(speed),false);
+      ctxS.strokeStyle=grd; ctxS.lineWidth=22;
+      ctxS.shadowColor=ac; ctxS.shadowBlur=16; ctxS.stroke(); ctxS.shadowBlur=0;
+    }
+
+    for(let i=0;i<=9;i++){
+      const val=i*10, a=speedToAngle(val);
+      ctxS.beginPath();
+      ctxS.moveTo(cx+Math.cos(a)*(r-38), cy+Math.sin(a)*(r-38));
+      ctxS.lineTo(cx+Math.cos(a)*(r-18), cy+Math.sin(a)*(r-18));
+      ctxS.strokeStyle = val<=speed ? '#aaffcc' : '#2a4a2a';
+      ctxS.lineWidth=2; ctxS.stroke();
+
+      ctxS.fillStyle = val<=speed ? '#6fe' : '#3a6a3a';
+      ctxS.font='bold 9px Orbitron,monospace';
+      ctxS.textAlign='center'; ctxS.textBaseline='middle';
+      ctxS.fillText(val, cx+Math.cos(a)*(r-52), cy+Math.sin(a)*(r-52));
+    }
+
+    for(let i=0;i<=18;i++){
+      if(i%2===0) continue;
+      const a=speedToAngle(i*5);
+      ctxS.beginPath();
+      ctxS.moveTo(cx+Math.cos(a)*(r-30), cy+Math.sin(a)*(r-30));
+      ctxS.lineTo(cx+Math.cos(a)*(r-18), cy+Math.sin(a)*(r-18));
+      ctxS.strokeStyle='#1a3a1a'; ctxS.lineWidth=1; ctxS.stroke();
+    }
+
+    const na=speedToAngle(speed);
+    ctxS.save(); ctxS.translate(cx,cy); ctxS.rotate(na);
+    ctxS.shadowColor=getSpeedColor(Math.max(speed,1)); ctxS.shadowBlur=12;
+    ctxS.beginPath(); ctxS.moveTo(-22,1.5); ctxS.lineTo(r-32,0); ctxS.lineTo(-22,-1.5);
+    ctxS.closePath(); ctxS.fillStyle='#fff'; ctxS.fill();
+    ctxS.beginPath(); ctxS.moveTo(r-58,1); ctxS.lineTo(r-32,0); ctxS.lineTo(r-58,-1);
+    ctxS.closePath(); ctxS.fillStyle=getSpeedColor(Math.max(speed,1)); ctxS.fill();
+    ctxS.shadowBlur=0; ctxS.restore();
+
+    const cap=ctxS.createRadialGradient(cx,cy,0,cx,cy,15);
+    cap.addColorStop(0,'#5ef'); cap.addColorStop(0.4,'#2a8'); cap.addColorStop(1,'#0a1a0a');
+    ctxS.beginPath(); ctxS.arc(cx,cy,15,0,Math.PI*2); ctxS.fillStyle=cap; ctxS.fill();
+    ctxS.beginPath(); ctxS.arc(cx,cy,5,0,Math.PI*2); ctxS.fillStyle='#efffef'; ctxS.fill();
+  }
+
+  function drawPower(power){
+    const dpr = window.devicePixelRatio || 1;
+    const W = csPower.width / dpr;
+    const H = csPower.height / dpr;
+    const cx = W/2, cy = H*0.60, r = Math.min(W,H)*0.48;
+    ctxP.clearRect(0,0,W,H);
+
+    const bg = ctxP.createRadialGradient(cx,cy,r-15,cx,cy,r+6);
+    bg.addColorStop(0,'#080c1a'); bg.addColorStop(1,'#080c08');
+    ctxP.beginPath(); ctxP.arc(cx,cy,r+3,0,Math.PI*2); ctxP.fillStyle=bg; ctxP.fill();
+    ctxP.beginPath(); ctxP.arc(cx,cy,r+1,0,Math.PI*2); ctxP.strokeStyle='#0a1a4a'; ctxP.lineWidth=1.5; ctxP.stroke();
+
+    ctxP.beginPath(); ctxP.arc(cx,cy,r-14,startAngle,startAngle+sweep,false);
+    ctxP.strokeStyle='#080c1a'; ctxP.lineWidth=22; ctxP.stroke();
+
+    ctxP.beginPath();
+    ctxP.arc(cx,cy,r-14,powerToAngle(-300),powerToAngle(0),false);
+    ctxP.strokeStyle='#33ee8835'; ctxP.lineWidth=22; ctxP.stroke();
+
+    ctxP.beginPath();
+    ctxP.arc(cx,cy,r-14,powerToAngle(0),powerToAngle(300),false);
+    ctxP.strokeStyle='#00aaff35'; ctxP.lineWidth=22; ctxP.stroke();
+
+    if(power !== 0){
+      const ac=getPowerColor(power);
+      const aVal=powerToAngle(power);
+      const grd=ctxP.createLinearGradient(0,cy,W,cy);
+      grd.addColorStop(0,'#33ee88');
+      grd.addColorStop(0.5,'#66ccff');
+      grd.addColorStop(1,'#00aaff');
+
+      ctxP.beginPath();
+      if(power<0) ctxP.arc(cx,cy,r-14,aVal,midPowerAngle,false);
+      else ctxP.arc(cx,cy,r-14,midPowerAngle,aVal,false);
+
+      ctxP.strokeStyle=grd; ctxP.lineWidth=22;
+      ctxP.shadowColor=ac; ctxP.shadowBlur=16;
+      ctxP.stroke(); ctxP.shadowBlur=0;
+    }
+
+    const steps=[-300,-200,-100,0,100,200,300];
+    steps.forEach(val=>{
+      const a=powerToAngle(val);
+      ctxP.beginPath();
+      ctxP.moveTo(cx+Math.cos(a)*(r-38), cy+Math.sin(a)*(r-38));
+      ctxP.lineTo(cx+Math.cos(a)*(r-18), cy+Math.sin(a)*(r-18));
+      ctxP.strokeStyle='#0a1a3a';
+      ctxP.lineWidth=2; ctxP.stroke();
+
+      ctxP.fillStyle = val<0 ? '#33ee88' : (val>0 ? '#00aaff' : '#66ccff');
+      ctxP.font='bold 8px Orbitron,monospace';
+      ctxP.textAlign='center'; ctxP.textBaseline='middle';
+      const txt = val>0 ? `+${val}` : String(val);
+      ctxP.fillText(txt, cx+Math.cos(a)*(r-52), cy+Math.sin(a)*(r-52));
+    });
+
+    for(let v=-300; v<=300; v+=50){
+      if(v%100===0) continue;
+      const a=powerToAngle(v);
+      ctxP.beginPath();
+      ctxP.moveTo(cx+Math.cos(a)*(r-30), cy+Math.sin(a)*(r-30));
+      ctxP.lineTo(cx+Math.cos(a)*(r-18), cy+Math.sin(a)*(r-18));
+      ctxP.strokeStyle='#081828'; ctxP.lineWidth=1; ctxP.stroke();
+    }
+
+    const na=powerToAngle(power);
+    ctxP.save(); ctxP.translate(cx,cy); ctxP.rotate(na);
+    ctxP.shadowColor=getPowerColor(power===0?1:power); ctxP.shadowBlur=12;
+    ctxP.beginPath(); ctxP.moveTo(-22,1.5); ctxP.lineTo(r-32,0); ctxP.lineTo(-22,-1.5);
+    ctxP.closePath(); ctxP.fillStyle='#fff'; ctxP.fill();
+    ctxP.beginPath(); ctxP.moveTo(r-58,1); ctxP.lineTo(r-32,0); ctxP.lineTo(r-58,-1);
+    ctxP.closePath(); ctxP.fillStyle=getPowerColor(power); ctxP.fill();
+    ctxP.shadowBlur=0; ctxP.restore();
+
+    const cap=ctxP.createRadialGradient(cx,cy,0,cx,cy,15);
+    cap.addColorStop(0,'#aaeeff'); cap.addColorStop(0.4,'#0077cc'); cap.addColorStop(1,'#08081a');
+    ctxP.beginPath(); ctxP.arc(cx,cy,15,0,Math.PI*2); ctxP.fillStyle=cap; ctxP.fill();
+    ctxP.beginPath(); ctxP.arc(cx,cy,5,0,Math.PI*2); ctxP.fillStyle='#eef8ff'; ctxP.fill();
+  }
+
+  let curSpeed=0, curPower=0;
+  const refS={id:null}, refP={id:null};
+
+  function updateSpeed(v){
+    v = clamp(Math.round(v),0,maxSpeed);
+    curSpeed=v; drawSpeed(v);
+    $('speedDisplay').textContent=v;
+    const col=getSpeedColor(v);
+    $('speedDisplay').style.textShadow = `0 0 20px ${col},0 0 40px ${col}44`;
+    $('sliderSpeed').style.setProperty('--pct',(v/maxSpeed*100)+'%');
+  }
+  function updatePower(v){
+    v = clamp(Math.round(v),minPower,maxPower);
+    curPower=v; drawPower(v);
+    $('powerDisplay').textContent = (v>0?`+${v}`:String(v));
+    const col=getPowerColor(v);
+    $('powerDisplay').style.textShadow = `0 0 20px ${col},0 0 40px ${col}44`;
+  }
+
+  function animateVal(cur,target,duration,onUpdate,onDone,animRef){
+    if(animRef.id) cancelAnimationFrame(animRef.id);
+    const start=cur, diff=target-start;
+    const t0=performance.now();
+    function step(now){
+      const tt=Math.min((now-t0)/Math.max(1,duration),1);
+      const e=tt<0.5 ? 2*tt*tt : -1+(4-2*tt)*tt;
+      onUpdate(start+diff*e);
+      if(tt<1) animRef.id=requestAnimationFrame(step);
+      else onDone(target);
+    }
+    animRef.id=requestAnimationFrame(step);
+  }
+  function animateSpeed(target){
+    animateVal(curSpeed,target,Math.abs(target-curSpeed)*14,
+      v=>updateSpeed(v),
+      v=>{ updateSpeed(v); $('numSpeed').value=Math.round(v); $('sliderSpeed').value=Math.round(v); }, refS);
+  }
+  function animatePower(target){
+    animateVal(curPower,target,Math.abs(target-curPower)*10,
+      v=>updatePower(v),
+      v=>{ updatePower(v); $('numPower').value=Math.round(v); $('sliderPower').value=Math.round(v); }, refP);
+  }
+
+  $('numSpeed').addEventListener('input', e=>{
+    let v=clamp(parseInt(e.target.value)||0,0,maxSpeed);
+    $('sliderSpeed').value=v;
+    $('sliderSpeed').style.setProperty('--pct',(v/maxSpeed*100)+'%');
+    animateSpeed(v);
+  });
+  $('sliderSpeed').addEventListener('input', e=>{
+    const v=parseInt(e.target.value);
+    $('numSpeed').value=v;
+    animateSpeed(v);
+  });
+
+  $('numPower').addEventListener('input', e=>{
+    let v=clamp(parseInt(e.target.value)||0,minPower,maxPower);
+    $('sliderPower').value=v;
+    animatePower(v);
+  });
+  $('sliderPower').addEventListener('input', e=>{
+    const v=parseInt(e.target.value);
+    $('numPower').value=v;
+    animatePower(v);
+  });
+
+  document.querySelectorAll('#modulimo [data-speed]').forEach(btn=>{
+    btn.addEventListener('click', ()=>animateSpeed(parseInt(btn.getAttribute('data-speed'),10)));
+  });
+  document.querySelectorAll('#modulimo [data-power]').forEach(btn=>{
+    btn.addEventListener('click', ()=>animatePower(parseInt(btn.getAttribute('data-power'),10)));
+  });
+
+  function resizeAll(){
+    const aspect = (window.innerWidth < 520) ? (300/200) : (300/220);
+    const fit=(canvas)=>{
+      const cssW = canvas.clientWidth || 300;
+      const cssH = Math.round(cssW / aspect);
+      canvas.style.height = cssH + "px";
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    };
+    fit(csSpeed);
+    fit(csPower);
+    drawSpeed(curSpeed);
+    drawPower(curPower);
+  }
+  window.addEventListener('resize', ()=>{ clearTimeout(window.__mzr); window.__mzr=setTimeout(resizeAll, 80); });
+
+  // Init
+  $('sliderSpeed').style.setProperty('--pct','0%');
+  resizeAll();
+  updateSpeed(0);
+  updatePower(0);
+})();
+</script>
+</body>
+</html>
