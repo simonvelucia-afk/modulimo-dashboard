@@ -26,7 +26,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
 
-      /* ✅ réserve pour la barre fixed arrière (PC seulement) */
+      /* réserve pour la barre fixed arrière (PC) */
       padding-bottom: 210px;
     }
 
@@ -124,7 +124,7 @@
       white-space: nowrap;
     }
 
-    /* ===== FEU AVANT (en haut, simple) ===== */
+    /* ===== FEU AVANT (en haut) ===== */
     #modulimo .front-wrap{
       position: relative;
       margin: 10px 0 14px;
@@ -390,7 +390,7 @@
     #modulimo .btn.s{ border-color: rgba(120,255,220,0.35); color:#6fe; }
     #modulimo .btn.s:hover{ background:rgba(120,255,220,0.10); box-shadow:0 0 10px rgba(120,255,220,0.16); }
 
-    /* ===== FEU ARRIÈRE en bas de l'écran (PC) ===== */
+    /* ===== FEU ARRIÈRE fixed en bas (PC) ===== */
     #modulimo .rear-fixed{
       position: fixed;
       left: 50%;
@@ -453,11 +453,19 @@
         inset 0 0 18px rgba(255,40,40,0.18);
     }
 
-    /* ✅ Mobile: on désactive le fixed pour éviter le bas tronqué dans GoDaddy */
+    /* Mobile: pas de fixed (évite le bas tronqué GoDaddy) */
     @media (max-width: 860px){
       #modulimo{ padding-bottom: 14px; }
       #modulimo .controls{ grid-template-columns: 1fr; }
-      #modulimo .rear-fixed{ position: static; transform:none; left:auto; bottom:auto; width:100%; margin-top: 14px; pointer-events:auto; }
+      #modulimo .rear-fixed{
+        position: static;
+        transform:none;
+        left:auto;
+        bottom:auto;
+        width:100%;
+        margin-top: 14px;
+        pointer-events:auto;
+      }
       #modulimo .rear-glow{ display:none; }
       #modulimo .backlight-btn{ width:100%; }
     }
@@ -635,6 +643,11 @@
     window.__noteT = setTimeout(()=>noteBox.classList.remove('show'), 6500);
   }
 
+  // ===== Bouton "Plein écran" => ouvre GitHub dans un nouvel onglet =====
+  $('fsBtn')?.addEventListener('click', ()=>{
+    window.open('https://simonvelucia-afk.github.io/modulimo-dashboard/', '_blank', 'noopener,noreferrer');
+  });
+
   // ===== Clock =====
   let lang='fr';
   const pad2=n=>String(n).padStart(2,'0');
@@ -648,28 +661,6 @@
     const el=$('clock'); if(el) el.textContent = formatClock(new Date());
   }
   updateClock(); setInterval(updateClock,1000);
-
-  // ===== Fullscreen (PC) =====
-  function isFullscreen(){
-    return !!(document.fullscreenElement || document.webkitFullscreenElement);
-  }
-  async function requestFs(){
-    const wrapper = $('modulimo');
-    try{
-      if(wrapper.requestFullscreen) await wrapper.requestFullscreen({ navigationUI: "hide" });
-      else if(wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
-    }catch(e){
-      showNote("Plein écran bloqué (souvent dans l’aperçu GoDaddy / iframe). Ouvre la page publiée dans un nouvel onglet.");
-      try{ window.open(window.location.href, "_blank"); }catch(_){}
-    }
-  }
-  async function exitFs(){
-    try{
-      if(document.exitFullscreen) await document.exitFullscreen();
-      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
-    }catch(e){}
-  }
-  $('fsBtn')?.addEventListener('click', ()=>{ isFullscreen() ? exitFs() : requestFs(); });
 
   // ===== Feu arrière (bottom) =====
   let rearOn=false;
