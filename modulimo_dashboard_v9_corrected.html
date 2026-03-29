@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>MODULIMO — Dashboard V8</title>
+  <meta name="description" content="Dashboard V8 MODULIMO avec un seul clignotant actif à la fois, compatible iPhone, FR/EN/ES." />
+  <style>
+    :root{
+      --bg:#020607;
+      --panel:#041012;
+      --line:rgba(83,255,176,.16);
+      --text:#e8fff5;
+      --muted:#7ec8ac;
+      --accent:#57ffb6;
+      --blue:#2bb4ff;
+      --orange:#ff9c33;
+      --red:#ff4d5d;
+      --shadow:0 24px 80px rgba(0,0,0,.48);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(87,255,182,.05), transparent 24%),
+        linear-gradient(180deg,#010405 0%,#020809 100%);
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    body:before{
+      content:"";
+      position:fixed; inset:0; pointer-events:none; opacity:.08;
+      background-image:
+        linear-gradient(rgba(87,255,182,.14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(87,255,182,.14) 1px, transparent 1px);
+      background-size:28px 28px;
+      mask-image:linear-gradient(180deg, black, transparent 90%);
+      -webkit-mask-image:linear-gradient(180deg, black, transparent 90%);
+    }
+    .wrap{
+      width:min(1220px,100%);
+      margin:0 auto;
+      padding:calc(10px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom));
+    }
+    .topbar{
+      display:flex; justify-content:flex-end; align-items:center; gap:8px;
+      margin-bottom:10px;
+      flex-wrap:wrap;
+    }
+    .ghost-btn{
+      min-height:38px; padding:0 14px; border-radius:10px;
+      border:1px solid rgba(87,255,182,.34);
+      background:rgba(5,20,22,.62);
+      color:var(--text); font:inherit; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+      text-decoration:none;
+      box-shadow:0 0 0 1px rgba(255,255,255,.02) inset;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .ghost-btn:hover{background:rgba(87,255,182,.1)}
+    .shell{
+      background:linear-gradient(180deg, rgba(4,16,18,.95), rgba(4,11,13,.97));
+      border:1px solid rgba(87,255,182,.14);
+      border-radius:30px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .header{
+      text-align:center;
+      padding:24px 20px 18px;
+      border-bottom:1px solid rgba(87,255,182,.10);
+      background:radial-gradient(circle at 50% 0%, rgba(87,255,182,.06), transparent 44%);
+    }
+    .brand-link{
+      display:inline-block; text-decoration:none; color:inherit;
+      transition:transform .18s ease, opacity .18s ease, filter .18s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .brand-link:hover{
+      transform:translateY(-1px);
+      opacity:.95;
+      filter:drop-shadow(0 0 18px rgba(87,255,182,.16));
+    }
+    .brand{
+      margin:0;
+      color:var(--accent);
+      font-weight:900;
+      letter-spacing:.16em;
+      font-size:clamp(1.9rem,4vw,3rem);
+      text-shadow:0 0 20px rgba(87,255,182,.12);
+    }
+    .subtitle{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:.8rem;
+      letter-spacing:.26em;
+      text-transform:uppercase;
+    }
+    .clock{
+      margin-top:10px;
+      color:#97e5c4;
+      font-size:.82rem;
+      letter-spacing:.09em;
+      line-height:1.4;
+    }
+    .content{padding:18px}
+    .vehicle-lights{margin-bottom:14px; display:flex; justify-content:center}
+    .light-strip{
+      width:min(900px,100%);
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.02);
+      position:relative;
+      overflow:hidden;
+      transition:box-shadow .2s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+      opacity:.45;
+    }
+    .light-strip.front.on{
+      opacity:1;
+      border-color:rgba(255,255,255,.28);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.55), rgba(255,255,255,.14) 30%, rgba(87,255,182,.16) 50%, rgba(255,255,255,0) 85%),
+        linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.28), rgba(255,255,255,.18));
+      box-shadow:0 0 16px rgba(255,255,255,.25), 0 0 42px rgba(255,255,255,.18), 0 0 110px rgba(255,255,255,.16);
+    }
+    .light-strip.rear{margin:0; opacity:.55}
+    .light-strip.rear.on{
+      opacity:1;
+      border-color:rgba(255,77,93,.44);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,77,93,.42), rgba(255,77,93,.18) 36%, rgba(255,77,93,0) 85%),
+        linear-gradient(90deg, rgba(255,77,93,.22), rgba(255,77,93,.36), rgba(255,77,93,.22));
+      box-shadow:0 0 18px rgba(255,77,93,.20), 0 0 60px rgba(255,30,30,.18), 0 0 120px rgba(255,0,0,.16);
+    }
+    .control-bar,.footerBar{
+      margin-bottom:18px;
+      padding:10px;
+      border:1px solid rgba(87,255,182,.12);
+      border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,.01));
+    }
+    .footerBar{
+      margin-top:18px;
+      border-color:rgba(255,95,103,.20);
+      background:linear-gradient(180deg, rgba(255,95,103,.02), rgba(255,255,255,.005));
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+    }
+    .switch{
+      width:100%;
+      min-height:46px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background:#020708;
+      color:var(--text);
+      font-weight:700;
+      letter-spacing:.04em;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition:.18s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .switch.on{
+      border-color:rgba(87,255,182,.42);
+      background:rgba(87,255,182,.08);
+      box-shadow:0 0 0 1px rgba(87,255,182,.12) inset, 0 0 24px rgba(87,255,182,.10);
+    }
+    .rear.off{
+      border-color:rgba(255,95,103,.4);
+      box-shadow:0 0 0 1px rgba(255,95,103,.08) inset;
+    }
+    .rear.on{
+      border-color:rgba(255,95,103,.65);
+      background:rgba(255,95,103,.08);
+      box-shadow:0 0 0 1px rgba(255,95,103,.12) inset, 0 0 24px rgba(255,95,103,.12);
+    }
+    .dashboard{
+      display:grid;
+      grid-template-columns:70px 1fr 1fr 70px;
+      gap:14px;
+      align-items:stretch;
+    }
+    .sideArrow{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      color:var(--muted);
+      font-size:.72rem;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      user-select:none;
+    }
+    .arrowBtn{
+      width:54px; height:54px;
+      border-radius:14px;
+      border:1px solid rgba(87,255,182,.16);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      color:var(--accent);
+      font-size:1.6rem;
+      cursor:pointer;
+      box-shadow:0 10px 26px rgba(0,0,0,.22);
+      transition:.15s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .sideArrow.active{
+      color:#fff0d8;
+      text-shadow:0 0 14px rgba(255,165,0,.35);
+    }
+    .sideArrow.active .arrowBtn{
+      background:rgba(255,165,0,.18);
+      border-color:rgba(255,165,0,.6);
+      color:#fff4df;
+      box-shadow:0 0 14px rgba(255,165,0,.8), 0 0 40px rgba(255,140,0,.5), 0 10px 26px rgba(0,0,0,.22);
+    }
+    .panel{
+      border:1px solid rgba(87,255,182,.13);
+      border-radius:20px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(87,255,182,.03), transparent 38%),
+        linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,.008));
+      padding:14px;
+      overflow:hidden;
+      min-height:310px;
+    }
+    .panelTitle{
+      text-align:center;
+      color:#97e7c5;
+      font-size:.78rem;
+      letter-spacing:.24em;
+      text-transform:uppercase;
+      margin:4px 0 8px;
+    }
+    .gaugeWrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      height:100%;
+      position:relative;
+    }
+    .gaugeCanvas{
+      width:min(100%, 320px);
+      aspect-ratio:1/1;
+      display:block;
+      filter:drop-shadow(0 10px 30px rgba(0,0,0,.22));
+    }
+    .valueBox{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:2px;
+      margin-top:-10px;
+      position:relative;
+      z-index:3;
+    }
+    .valueMain{
+      font-size:clamp(2.4rem, 5vw, 3.4rem);
+      line-height:1;
+      font-weight:900;
+    }
+    .valueMain.power{
+      color:#f7fbff;
+      text-shadow:0 0 10px rgba(43,180,255,.42), 0 0 28px rgba(43,180,255,.22);
+    }
+    .valueMain.speed{
+      color:#fff1f1;
+      text-shadow:0 0 10px rgba(255,132,92,.40), 0 0 28px rgba(255,77,93,.18);
+    }
+    .valueUnit{
+      color:#9ed4ba;
+      letter-spacing:.14em;
+      text-transform:lowercase;
+      font-size:.86rem;
+    }
+    .bottomGrid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+    .sliderPanel{
+      border:1px solid rgba(87,255,182,.13);
+      border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,.008));
+      padding:14px;
+    }
+    .rowTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+      color:#99e7c8;
+      font-size:.78rem;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+    }
+    .readout{
+      color:#bff9df;
+      font-weight:800;
+      letter-spacing:.08em;
+      font-size:.92rem;
+    }
+    input[type=range]{
+      width:100%;
+      accent-color:var(--blue);
+      margin:0 0 10px;
+    }
+    .readoutBar{
+      width:100%;
+      min-height:26px;
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,.12);
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:800;
+      background:#03080a;
+      margin-bottom:10px;
+    }
+    .quickBtns{
+      display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    }
+    .quickBtn{
+      min-width:54px;
+      min-height:34px;
+      padding:0 12px;
+      border-radius:10px;
+      border:1px solid rgba(30,166,255,.45);
+      background:rgba(28,166,255,.06);
+      color:#9ddcff;
+      font:inherit;
+      font-size:.82rem;
+      font-weight:700;
+      cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+    }
+    @media (max-width:980px){
+      .dashboard{grid-template-columns:1fr 1fr}
+      .sideArrow{
+        flex-direction:row;
+        justify-content:center;
+        min-height:76px;
+      }
+    }
+    @media (max-width:700px){
+      .wrap{padding:calc(8px + env(safe-area-inset-top)) 8px calc(18px + env(safe-area-inset-bottom))}
+      .shell{border-radius:22px}
+      .header{padding:18px 14px 14px}
+      .content{padding:12px}
+      .dashboard,.bottomGrid{grid-template-columns:1fr}
+      .panel{min-height:250px}
+      .gaugeCanvas{width:min(100%, 270px)}
+      .valueMain{font-size:2.4rem}
+      .ghost-btn{min-height:36px; padding:0 12px; font-size:.92rem}
+      .switch{min-height:44px; font-size:.95rem}
+      .quickBtn{flex:1 1 30%; min-width:unset}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <button class="ghost-btn" data-lang-select="fr">FR</button>
+      <button class="ghost-btn" data-lang-select="en">EN</button>
+      <button class="ghost-btn" data-lang-select="es">ES</button>
+    </div>
+
+    <div class="shell">
+      <div class="header">
+        <a href="https://www.modulimo.com" target="_blank" rel="noopener" class="brand-link" aria-label="Aller à Modulimo">
+          <div class="brand">MODULIMO</div>
+          <div class="subtitle" data-fr="TABLEAU DE BORD" data-en="DASHBOARD" data-es="TABLERO DE CONTROL">TABLEAU DE BORD</div>
+        </a>
+        <div class="clock" id="clock">--:--:-- — ----/--/--</div>
+      </div>
+
+      <div class="content">
+        <div class="vehicle-lights">
+          <div class="light-strip front" id="frontGlow"></div>
+        </div>
+
+        <div class="control-bar">
+          <button class="switch" id="frontLight">
+            <span data-fr="FEU AVANT" data-en="FRONT LIGHT" data-es="LUZ DELANTERA">FEU AVANT</span>
+          </button>
+        </div>
+
+        <div class="dashboard">
+          <div class="sideArrow side-left" id="leftWrap">
+            <button class="arrowBtn" id="leftBtn">◀</button>
+            <div data-fr="GAUCHE" data-en="LEFT" data-es="IZQUIERDA">GAUCHE</div>
+          </div>
+
+          <div class="panel">
+            <div class="panelTitle" data-fr="Puissance" data-en="Power" data-es="Potencia">Puissance</div>
+            <div class="gaugeWrap">
+              <canvas class="gaugeCanvas" id="powerGauge" width="360" height="360"></canvas>
+              <div class="valueBox">
+                <div class="valueMain power" id="powerValue">0</div>
+                <div class="valueUnit">Watts</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panelTitle" data-fr="Vitesse" data-en="Speed" data-es="Velocidad">Vitesse</div>
+            <div class="gaugeWrap">
+              <canvas class="gaugeCanvas" id="speedGauge" width="360" height="360"></canvas>
+              <div class="valueBox">
+                <div class="valueMain speed" id="speedValue">0</div>
+                <div class="valueUnit">km / h</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sideArrow side-right" id="rightWrap">
+            <button class="arrowBtn" id="rightBtn">▶</button>
+            <div data-fr="DROITE" data-en="RIGHT" data-es="DERECHA">DROITE</div>
+          </div>
+        </div>
+
+        <div class="bottomGrid">
+          <div class="sliderPanel">
+            <div class="rowTop">
+              <span data-fr="PUISSANCE CONDENSATEUR" data-en="CAPACITOR POWER" data-es="POTENCIA DEL CONDENSADOR">PUISSANCE CONDENSATEUR</span>
+              <span class="readout" id="powerTopReadout">0 W</span>
+            </div>
+            <input id="powerRange" type="range" min="-300" max="300" step="10" value="0">
+            <div class="readoutBar" id="powerBarValue">0 W</div>
+            <div class="quickBtns">
+              <button class="quickBtn" data-power="-300">-300</button>
+              <button class="quickBtn" data-power="-150">-150</button>
+              <button class="quickBtn" data-power="0">0</button>
+              <button class="quickBtn" data-power="150">+150</button>
+              <button class="quickBtn" data-power="300">+300</button>
+            </div>
+          </div>
+
+          <div class="sliderPanel">
+            <div class="rowTop">
+              <span data-fr="VITESSE" data-en="SPEED" data-es="VELOCIDAD">VITESSE</span>
+              <span class="readout" id="speedTopReadout">0 km/h</span>
+            </div>
+            <input id="speedRange" type="range" min="0" max="90" step="1" value="0">
+            <div class="readoutBar" id="speedBarValue">0 km/h</div>
+            <div class="quickBtns">
+              <button class="quickBtn" data-speed="0">STOP</button>
+              <button class="quickBtn" data-speed="20">20</button>
+              <button class="quickBtn" data-speed="40">40</button>
+              <button class="quickBtn" data-speed="60">60</button>
+              <button class="quickBtn" data-speed="90">MAX</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="footerBar">
+          <button class="switch rear off" id="rearLight">
+            <span data-fr="FEU ARRIÈRE" data-en="REAR LIGHT" data-es="LUZ TRASERA">FEU ARRIÈRE</span>
+          </button>
+          <div class="light-strip rear" id="rearGlow"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const powerRange = document.getElementById('powerRange');
+    const speedRange = document.getElementById('speedRange');
+    const powerValue = document.getElementById('powerValue');
+    const speedValue = document.getElementById('speedValue');
+    const powerTopReadout = document.getElementById('powerTopReadout');
+    const speedTopReadout = document.getElementById('speedTopReadout');
+    const powerBarValue = document.getElementById('powerBarValue');
+    const speedBarValue = document.getElementById('speedBarValue');
+    const frontLight = document.getElementById('frontLight');
+    const rearLight = document.getElementById('rearLight');
+    const frontGlow = document.getElementById('frontGlow');
+    const rearGlow = document.getElementById('rearGlow');
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const leftWrap = document.getElementById('leftWrap');
+    const rightWrap = document.getElementById('rightWrap');
+    const powerCanvas = document.getElementById('powerGauge');
+    const speedCanvas = document.getElementById('speedGauge');
+    const pctx = powerCanvas.getContext('2d');
+    const sctx = speedCanvas.getContext('2d');
+    const clockEl = document.getElementById('clock');
+
+    let lang = 'fr';
+    let leftBlinkTimer = null;
+    let rightBlinkTimer = null;
+    let currentSpeed = 0;
+    let targetSpeed = 0;
+
+    document.querySelectorAll('[data-lang-select]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        lang = btn.getAttribute('data-lang-select');
+        translate();
+      });
+    });
+
+    function translate() {
+      document.querySelectorAll('[data-fr]').forEach(el => {
+        const value = el.getAttribute(`data-${lang}`);
+        if (value) el.textContent = value;
+      });
+      updateClock();
+    }
+
+    function updateClock() {
+      const d = new Date();
+      const locale = lang === 'fr' ? 'fr-CA' : (lang === 'es' ? 'es-ES' : 'en-CA');
+      const time = d.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      const date = d.toLocaleDateString(locale, {year:'numeric', month:'2-digit', day:'2-digit'});
+      clockEl.textContent = `${time} — ${date}`;
+    }
+
+    function polarToCartesian(cx, cy, r, angle) {
+      return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+    }
+
+    function drawPowerGauge(value) {
+      const ctx = pctx;
+      const w = powerCanvas.width, h = powerCanvas.height;
+      const cx = w/2, cy = h/2;
+      const r = 128;
+      ctx.clearRect(0,0,w,h);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, r+14, 0, Math.PI*2);
+      ctx.strokeStyle = 'rgba(15,76,255,.34)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      const grad = ctx.createRadialGradient(cx,cy,10,cx,cy,r);
+      grad.addColorStop(0,'rgba(7,20,74,.95)');
+      grad.addColorStop(1,'rgba(2,8,26,.98)');
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      for(let i=0;i<10;i++){
+        const a0 = Math.PI*0.78 + i*((Math.PI*1.44)/10);
+        const a1 = a0 + ((Math.PI*1.44)/10)*0.88;
+        ctx.beginPath();
+        ctx.arc(cx,cy,r-10,a0,a1);
+        ctx.strokeStyle = 'rgba(71,182,255,.12)';
+        ctx.lineWidth = 22;
+        ctx.stroke();
+      }
+
+      const labels = [-300,-200,-100,0,100,200,300];
+      labels.forEach((lab, idx) => {
+        const angle = Math.PI*0.78 + idx*((Math.PI*1.44)/(labels.length-1));
+        const p = polarToCartesian(cx, cy, r-42, angle);
+        ctx.fillStyle = lab === 0 ? '#dff8eb' : '#37ccff';
+        ctx.font = '700 14px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(lab > 0 ? `+${lab}` : `${lab}`, p.x, p.y);
+      });
+
+      const angle = Math.PI*0.78 + ((value+300)/600)*(Math.PI*1.44);
+      const needleEnd = polarToCartesian(cx, cy, r-42, angle);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, r-10, angle-0.12, angle+0.10);
+      ctx.strokeStyle = 'rgba(67,186,255,.88)';
+      ctx.lineWidth = 22;
+      ctx.shadowBlur = 22;
+      ctx.shadowColor = '#43baff';
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      const hx = needleEnd.x * 0.84 + cx * 0.16;
+      const hy = needleEnd.y * 0.84 + cy * 0.16;
+      const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, 26);
+      halo.addColorStop(0, 'rgba(90,200,255,.32)');
+      halo.addColorStop(.15, 'rgba(90,200,255,.12)');
+      halo.addColorStop(1, 'rgba(56,160,255,0)');
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 48, 0, Math.PI*2);
+      ctx.fillStyle = halo;
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(needleEnd.x, needleEnd.y);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.8;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#7ac4ff';
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      const cgrad = ctx.createRadialGradient(cx,cy,2,cx,cy,16);
+      cgrad.addColorStop(0,'#fff');
+      cgrad.addColorStop(0.25,'#2faeff');
+      cgrad.addColorStop(1,'rgba(47,174,255,.25)');
+      ctx.beginPath();
+      ctx.arc(cx,cy,16,0,Math.PI*2);
+      ctx.fillStyle = cgrad;
+      ctx.fill();
+
+      const endGlow = ctx.createRadialGradient(needleEnd.x, needleEnd.y, 0, needleEnd.x, needleEnd.y, 20);
+      endGlow.addColorStop(0, '#d7f3ff');
+      endGlow.addColorStop(.2, '#6bc9ff');
+      endGlow.addColorStop(1, 'rgba(107,201,255,0)');
+      ctx.beginPath();
+      ctx.arc(needleEnd.x, needleEnd.y, 20, 0, Math.PI*2);
+      ctx.fillStyle = endGlow;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(needleEnd.x, needleEnd.y, 5, 0, Math.PI*2);
+      ctx.fillStyle = '#7ac4ff';
+      ctx.fill();
+    }
+
+    function drawSpeedGauge(value) {
+      const ctx = sctx;
+      const w = speedCanvas.width, h = speedCanvas.height;
+      const cx = w/2, cy = h/2;
+      const r = 128;
+      ctx.clearRect(0,0,w,h);
+
+      const grad = ctx.createRadialGradient(cx,cy,10,cx,cy,r+8);
+      grad.addColorStop(0,'rgba(8,28,18,.58)');
+      grad.addColorStop(1,'rgba(5,16,8,.98)');
+      ctx.beginPath();
+      ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      const segments = [
+        {from:0,to:18,color:'rgba(87,255,182,.22)'},
+        {from:18,to:36,color:'rgba(87,255,182,.18)'},
+        {from:36,to:54,color:'rgba(255,216,107,.24)'},
+        {from:54,to:72,color:'rgba(255,156,51,.24)'},
+        {from:72,to:90,color:'rgba(255,77,93,.22)'},
+      ];
+      segments.forEach(seg=>{
+        const a0 = Math.PI*0.75 + (seg.from/90)*(Math.PI*1.5);
+        const a1 = Math.PI*0.75 + (seg.to/90)*(Math.PI*1.5);
+        ctx.beginPath();
+        ctx.arc(cx,cy,r-8,a0,a1);
+        ctx.strokeStyle = seg.color;
+        ctx.lineWidth = 24;
+        ctx.stroke();
+      });
+
+      for(let lab=0; lab<=90; lab+=10){
+        const angle = Math.PI*0.75 + (lab/90)*(Math.PI*1.5);
+        const p = polarToCartesian(cx, cy, r-40, angle);
+        ctx.fillStyle = '#66c894';
+        ctx.font = '700 13px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(lab), p.x, p.y);
+      }
+
+      const angle = Math.PI*0.75 + (value/90)*(Math.PI*1.5);
+      const needleEnd = polarToCartesian(cx, cy, r-38, angle);
+
+      let activeColor = '#7effcc';
+      if (value >= 70) activeColor = '#ff5d68';
+      else if (value >= 45) activeColor = '#ffb13c';
+      else if (value >= 25) activeColor = '#ffd84d';
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, r-8, angle-0.30, angle+0.12);
+      ctx.strokeStyle = activeColor;
+      ctx.lineWidth = 24;
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = activeColor;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      const hx = needleEnd.x * 0.84 + cx * 0.16;
+      const hy = needleEnd.y * 0.84 + cy * 0.16;
+      const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, 28);
+      halo.addColorStop(0, value >= 45 ? 'rgba(255,132,72,.30)' : 'rgba(126,255,204,.30)');
+      halo.addColorStop(.15, value >= 45 ? 'rgba(255,132,72,.10)' : 'rgba(87,255,182,.10)');
+      halo.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 48, 0, Math.PI*2);
+      ctx.fillStyle = halo;
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(needleEnd.x, needleEnd.y);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.8;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = activeColor;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      const cgrad = ctx.createRadialGradient(cx,cy,2,cx,cy,18);
+      cgrad.addColorStop(0,'#fff');
+      cgrad.addColorStop(.25,'#57ffb6');
+      cgrad.addColorStop(1,'rgba(87,255,182,.28)');
+      ctx.beginPath();
+      ctx.arc(cx,cy,18,0,Math.PI*2);
+      ctx.fillStyle = cgrad;
+      ctx.fill();
+
+      const endGlow = ctx.createRadialGradient(needleEnd.x, needleEnd.y, 0, needleEnd.x, needleEnd.y, 22);
+      endGlow.addColorStop(0, '#fff2d0');
+      endGlow.addColorStop(.24, activeColor);
+      endGlow.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.beginPath();
+      ctx.arc(needleEnd.x, needleEnd.y, 22, 0, Math.PI*2);
+      ctx.fillStyle = endGlow;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(needleEnd.x, needleEnd.y, 5, 0, Math.PI*2);
+      ctx.fillStyle = activeColor;
+      ctx.fill();
+    }
+
+    function updateReadouts() {
+      const p = Number(powerRange.value);
+      powerValue.textContent = p > 0 ? `+${p}` : `${p}`;
+      powerTopReadout.textContent = `${p} W`;
+      powerBarValue.textContent = `${p} W`;
+      drawPowerGauge(p);
+    }
+
+    function animateSpeed() {
+      targetSpeed = Number(speedRange.value);
+      currentSpeed += (targetSpeed - currentSpeed) * 0.08;
+      if (Math.abs(targetSpeed - currentSpeed) < 0.05) currentSpeed = targetSpeed;
+      speedValue.textContent = Math.round(currentSpeed);
+      speedTopReadout.textContent = `${Math.round(currentSpeed)} km/h`;
+      speedBarValue.textContent = `${Math.round(currentSpeed)} km/h`;
+      drawSpeedGauge(currentSpeed);
+      requestAnimationFrame(animateSpeed);
+    }
+
+    function toggleFrontLight() {
+      frontLight.classList.toggle('on');
+      frontGlow.classList.toggle('on', frontLight.classList.contains('on'));
+    }
+
+    function toggleRearLight() {
+      rearLight.classList.toggle('on');
+      rearLight.classList.toggle('off', !rearLight.classList.contains('on'));
+      rearGlow.classList.toggle('on', rearLight.classList.contains('on'));
+    }
+
+    function stopBlink(side) {
+      if (side === 'left' && leftBlinkTimer) {
+        clearInterval(leftBlinkTimer);
+        leftBlinkTimer = null;
+        leftWrap.classList.remove('active');
+        leftBtn.style.filter = 'none';
+      }
+      if (side === 'right' && rightBlinkTimer) {
+        clearInterval(rightBlinkTimer);
+        rightBlinkTimer = null;
+        rightWrap.classList.remove('active');
+        rightBtn.style.filter = 'none';
+      }
+    }
+
+    function startBlink(side) {
+      const wrap = side === 'left' ? leftWrap : rightWrap;
+      const btn = side === 'left' ? leftBtn : rightBtn;
+      const currentTimer = side === 'left' ? leftBlinkTimer : rightBlinkTimer;
+
+      if (currentTimer) {
+        stopBlink(side);
+        return;
+      }
+
+      // only one blinker at a time
+      stopBlink(side === 'left' ? 'right' : 'left');
+
+      const timer = setInterval(() => {
+        const active = wrap.classList.toggle('active');
+        btn.style.filter = active ? 'drop-shadow(0 0 12px orange)' : 'none';
+      }, 420);
+
+      if (side === 'left') leftBlinkTimer = timer;
+      else rightBlinkTimer = timer;
+    }
+
+    frontLight.addEventListener('click', toggleFrontLight);
+    rearLight.addEventListener('click', toggleRearLight);
+    leftBtn.addEventListener('click', ()=>startBlink('left'));
+    rightBtn.addEventListener('click', ()=>startBlink('right'));
+    powerRange.addEventListener('input', updateReadouts);
+    speedRange.addEventListener('input', ()=>{});
+
+    document.querySelectorAll('[data-power]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        powerRange.value = btn.dataset.power;
+        updateReadouts();
+      });
+    });
+    document.querySelectorAll('[data-speed]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        speedRange.value = btn.dataset.speed;
+      });
+    });
+
+    translate();
+    updateReadouts();
+    updateClock();
+    setInterval(updateClock, 1000);
+    animateSpeed();
+  </script>
+</body>
+</html>
