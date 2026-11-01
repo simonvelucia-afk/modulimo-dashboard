@@ -868,8 +868,11 @@
       if (frontLight.classList.contains('on') !== avant) toggleFrontLight();
       if (rearLight.classList.contains('on') !== arriere) toggleRearLight();
     }
-    const feuxVersVolant = () => parent !== window && parent.postMessage({ type: 'modulimo-ecran',
-      feux: { avant: frontLight.classList.contains('on'), arriere: rearLight.classList.contains('on') } }, '*');
+    // après un clic sur un feu, l'écran ignore l'état des feux envoyé par la page pendant 1 s :
+    // un envoi parti avant que la page ait reçu le clic rallumerait / éteindrait le feu à tort
+    let feuxClicA = 0;
+    const feuxVersVolant = () => { feuxClicA = Date.now(); return parent !== window && parent.postMessage({ type: 'modulimo-ecran',
+      feux: { avant: frontLight.classList.contains('on'), arriere: rearLight.classList.contains('on') } }, '*'); };
     frontLight.addEventListener('click', feuxVersVolant);
     rearLight.addEventListener('click', feuxVersVolant);
     leftBtn.addEventListener('click', ()=>startBlink('left'));
@@ -911,7 +914,7 @@
       if (e.source !== window.parent || window.parent === window || m.type !== 'modulimo-volant') return;
       if (typeof m.vitesse === 'number') speedRange.value = m.vitesse;
       if (typeof m.puissance === 'number') { powerRange.value = m.puissance; updateReadouts(); }
-      if (m.feux) poserFeux(!!m.feux.avant, !!m.feux.arriere);
+      if (m.feux && Date.now() - feuxClicA > 1000) poserFeux(!!m.feux.avant, !!m.feux.arriere);
       if (typeof m.consigne === 'number') document.getElementById('consVal').textContent = Math.round(m.consigne);
       if (typeof m.charge === 'number') {
         const c = Math.max(0, Math.min(100, m.charge));
