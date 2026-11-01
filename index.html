@@ -379,7 +379,18 @@
     html.ecran5 .brand-link{display:flex;align-items:center;gap:12px}
     html.ecran5 .brand-link:before{content:"";width:32px;height:32px;background:url(logo.png) center/contain no-repeat}
     html.ecran5 .brand{font-size:1.15rem}
-    html.ecran5 .clock{font-size:.85rem;margin:0}
+    html.ecran5 .clock{display:none}
+    .sim{display:none}
+    html.ecran5 .sim{display:flex;align-items:center;gap:18px}
+    .simBloc{display:flex;align-items:center;gap:6px}
+    .simLbl{font-size:.6rem;letter-spacing:.18em;color:var(--muted)}
+    .simVal{font-weight:900;font-size:1.05rem;color:var(--text);min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+    .simUnit{font-size:.65rem;color:var(--muted)}
+    .simBtn{width:30px;height:26px;border-radius:8px;border:1px solid rgba(87,255,182,.34);background:rgba(5,20,22,.62);color:var(--accent);font:700 1rem inherit;cursor:pointer;padding:0;line-height:1}
+    .simBtn:active{background:rgba(87,255,182,.2)}
+    .simJauge{width:96px;height:12px;border-radius:6px;border:1px solid rgba(87,255,182,.34);overflow:hidden;background:rgba(5,20,22,.62)}
+    #chargeBar{height:100%;width:50%;background:linear-gradient(90deg,#1fae6e,#57ffb6);transition:width .3s}
+    #chargeBar.bas{background:linear-gradient(90deg,#b3261e,#ff8a65)}
     /* comme le tableau de bord : feu avant en haut, cadrans au milieu, feu arrière en bas */
     html.ecran5 .content{flex:1;min-height:0;display:flex;flex-direction:column;gap:5px;padding:6px 12px 8px}
     html.ecran5 .vehicle-lights{margin:0}
@@ -414,6 +425,20 @@
           <div class="brand">MODULIMO</div>
           <div class="subtitle" data-fr="TABLEAU DE BORD" data-en="DASHBOARD" data-es="TABLERO DE CONTROL">TABLEAU DE BORD</div>
         </a>
+        <!-- Mode écran 5 po : vitesse de consigne et charge des condensateurs (simulation de la page) -->
+        <div class="sim" id="simBar">
+          <div class="simBloc">
+            <span class="simLbl" data-fr="CONSIGNE" data-en="SET SPEED" data-es="CONSIGNA">CONSIGNE</span>
+            <button class="simBtn" id="consMoins" type="button" aria-label="−5 km/h">−</button>
+            <span class="simVal" id="consVal">20</span><span class="simUnit">km/h</span>
+            <button class="simBtn" id="consPlus" type="button" aria-label="+5 km/h">+</button>
+          </div>
+          <div class="simBloc">
+            <span class="simLbl" data-fr="CONDENSATEURS" data-en="CAPACITORS" data-es="CONDENSADORES">CONDENSATEURS</span>
+            <div class="simJauge"><div id="chargeBar"></div></div>
+            <span class="simVal" id="chargeVal">50 %</span>
+          </div>
+        </div>
         <div class="clock" id="clock">--:--:-- — ----/--/--</div>
       </div>
 
@@ -530,6 +555,8 @@
     const clockEl = document.getElementById('clock');
 
     let lang = 'fr';
+    const langDemandee = new URLSearchParams(location.search).get('lang');
+    if (['fr', 'en', 'es'].includes(langDemandee)) lang = langDemandee;
     let leftBlinkTimer = null;
     let rightBlinkTimer = null;
     let currentSpeed = 0;
@@ -843,6 +870,11 @@
       clignotant: leftBlinkTimer ? 'gauche' : rightBlinkTimer ? 'droite' : null }, '*');
     leftBtn.addEventListener('click', versVolant);
     rightBtn.addEventListener('click', versVolant);
+    // consigne de vitesse : la page (simulation) décide et renvoie la valeur retenue
+    const consigne = (delta) => parent !== window && parent.postMessage({ type: 'modulimo-ecran',
+      consigne: Number(document.getElementById('consVal').textContent) + delta }, '*');
+    document.getElementById('consMoins').addEventListener('click', () => consigne(-5));
+    document.getElementById('consPlus').addEventListener('click', () => consigne(5));
     powerRange.addEventListener('input', updateReadouts);
     speedRange.addEventListener('input', ()=>{});
 
@@ -870,6 +902,14 @@
       if (e.source !== window.parent || window.parent === window || m.type !== 'modulimo-volant') return;
       if (typeof m.vitesse === 'number') speedRange.value = m.vitesse;
       if (typeof m.puissance === 'number') { powerRange.value = m.puissance; updateReadouts(); }
+      if (typeof m.consigne === 'number') document.getElementById('consVal').textContent = Math.round(m.consigne);
+      if (typeof m.charge === 'number') {
+        const c = Math.max(0, Math.min(100, m.charge));
+        const bar = document.getElementById('chargeBar');
+        bar.style.width = c + '%';
+        bar.classList.toggle('bas', c < 15);
+        document.getElementById('chargeVal').textContent = Math.round(c) + ' %';
+      }
       if (m.clignotant !== undefined) {
         const veut = m.clignotant;   // 'gauche' | 'droite' | null
         if (veut !== 'gauche' && leftBlinkTimer) stopBlink('left');
