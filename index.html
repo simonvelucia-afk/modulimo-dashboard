@@ -366,6 +366,39 @@
       .quickBtn{flex:1 1 30%; min-width:unset}
     }
   </style>
+
+  <!-- Mode « écran 5 po » (?ecran=5) : l'écran tactile au centre du volant papillon, 800 × 450 -->
+  <script>if (/[?&]ecran=5\b/.test(location.search)) document.documentElement.classList.add('ecran5');</script>
+  <style>
+    html.ecran5 body{min-height:0;height:100vh;overflow:hidden}
+    html.ecran5 body:before{display:none}
+    html.ecran5 .wrap{width:100%;height:100vh;padding:0}
+    html.ecran5 .topbar,html.ecran5 .bottomGrid,html.ecran5 .subtitle{display:none}
+    html.ecran5 .shell{height:100vh;border-radius:0;border:0;display:flex;flex-direction:column}
+    html.ecran5 .header{display:flex;align-items:center;justify-content:space-between;padding:4px 16px;text-align:left}
+    html.ecran5 .brand-link{display:flex;align-items:center;gap:12px}
+    html.ecran5 .brand-link:before{content:"";width:32px;height:32px;background:url(logo.png) center/contain no-repeat}
+    html.ecran5 .brand{font-size:1.15rem}
+    html.ecran5 .clock{font-size:.85rem;margin:0}
+    /* comme le tableau de bord : feu avant en haut, cadrans au milieu, feu arrière en bas */
+    html.ecran5 .content{flex:1;min-height:0;display:flex;flex-direction:column;gap:5px;padding:6px 12px 8px}
+    html.ecran5 .vehicle-lights{margin:0}
+    html.ecran5 .light-strip{height:5px}
+    html.ecran5 .dashboard{flex:1;min-height:0;grid-template-columns:56px 1fr 1fr 56px;gap:6px}
+    html.ecran5 .sideArrow{flex-direction:column;min-height:0}
+    html.ecran5 .panel{min-height:0;padding:2px 4px;border-radius:14px;display:flex;flex-direction:column}
+    html.ecran5 .panelTitle{margin:2px 0 0;font-size:.62rem}
+    /* cadrans : toute la hauteur libre, valeur posée dans le bas du cadran */
+    html.ecran5 .gaugeWrap{gap:0;flex:1;min-height:0;position:relative}
+    html.ecran5 .gaugeWrap .valueBox{position:absolute;left:0;right:0;bottom:2px}
+    html.ecran5 .gaugeCanvas{width:min(100%,220px)}
+    html.ecran5 .valueMain{font-size:1.9rem}
+    html.ecran5 .control-bar,html.ecran5 .footerBar{margin:0;padding:4px;gap:4px}
+    html.ecran5 .switch{min-height:24px;font-size:.7rem}
+    html.ecran5 .gaugeCanvas{width:auto;height:100%;max-width:100%;max-height:100%}
+    html.ecran5 .valueMain{font-size:1.4rem}
+    html.ecran5 .valueUnit{font-size:.7rem}
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -805,6 +838,11 @@
     rearLight.addEventListener('click', toggleRearLight);
     leftBtn.addEventListener('click', ()=>startBlink('left'));
     rightBtn.addEventListener('click', ()=>startBlink('right'));
+    // dans le volant : prévenir la page (le clignotant de la maquette 3D suit)
+    const versVolant = () => parent !== window && parent.postMessage({ type: 'modulimo-ecran',
+      clignotant: leftBlinkTimer ? 'gauche' : rightBlinkTimer ? 'droite' : null }, '*');
+    leftBtn.addEventListener('click', versVolant);
+    rightBtn.addEventListener('click', versVolant);
     powerRange.addEventListener('input', updateReadouts);
     speedRange.addEventListener('input', ()=>{});
 
@@ -824,6 +862,22 @@
     updateReadouts();
     updateClock();
     setInterval(updateClock, 1000);
+
+    // Pilotage externe (volant de la page Produits) : vitesse, puissance, clignotants.
+    // Seule la page qui contient l'écran (le volant) peut le piloter.
+    window.addEventListener('message', (e) => {
+      const m = e.data || {};
+      if (e.source !== window.parent || window.parent === window || m.type !== 'modulimo-volant') return;
+      if (typeof m.vitesse === 'number') speedRange.value = m.vitesse;
+      if (typeof m.puissance === 'number') { powerRange.value = m.puissance; updateReadouts(); }
+      if (m.clignotant !== undefined) {
+        const veut = m.clignotant;   // 'gauche' | 'droite' | null
+        if (veut !== 'gauche' && leftBlinkTimer) stopBlink('left');
+        if (veut !== 'droite' && rightBlinkTimer) stopBlink('right');
+        if (veut === 'gauche' && !leftBlinkTimer) startBlink('left');
+        if (veut === 'droite' && !rightBlinkTimer) startBlink('right');
+      }
+    });
     animateSpeed();
   </script>
 </body>
